@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Traffic AI - Final</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #FF8C00; /* Neon Orange */
+            --bg-dark: #050505;
+            --card-bg: #111111;
+            --text-light: #ffffff;
+            --border-color: #333;
+        }
+
+        /* 1. Body: No Scroll, Full Height */
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Rajdhani', sans-serif;
+            height: 100vh; /* Force screen height */
+            overflow: hidden; /* Hide Scrollbars */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 2. Navbar: Fixed Height (60px) */
+        .navbar {
+            height: 60px;
+            background: #0a0a0a;
+            border-bottom: 2px solid var(--primary);
+            flex-shrink: 0;
+        }
+        .brand-text {
+            color: var(--primary);
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 1.4rem;
+            text-transform: uppercase;
+        }
+
+        /* 3. Main Container: Takes remaining height */
+        .dashboard-container {
+            flex-grow: 1;
+            padding: 15px;
+            height: calc(100vh - 60px); /* Exact remaining space */
+            display: flex;
+            flex-direction: row;
+        }
+
+        /* --- LEFT COLUMN (Video + Stats) --- */
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Video Wrapper: Adjusts automatically */
+        .video-wrapper {
+            position: relative;
+            flex-grow: 1; /* Take all available space */
+            min-height: 0; /* Important for flex scaling */
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .video-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Ensure image fits inside */
+        }
+
+        /* Stats Row: Fixed Height at Bottom */
+        .stats-row {
+            height: 90px; /* Fixed height for stats */
+            flex-shrink: 0;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .stat-val { font-size: 1.8rem; font-weight: bold; color: var(--primary); line-height: 1; }
+        .stat-label { color: #888; font-size: 0.8rem; margin-bottom: 5px; }
+
+
+        /* --- RIGHT COLUMN (Controls) --- */
+        .right-col {
+            height: 100%;
+        }
+
+        .control-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Top, Middle, Bottom spacing */
+        }
+
+        /* Timer Section */
+        .timer-section {
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .timer-display {
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(255, 140, 0, 0.4);
+        }
+
+        /* Controls Section (Middle) */
+        .controls-section {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10px 0;
+        }
+
+        /* Status Section (Bottom) */
+        .status-section {
+            padding-top: 10px;
+            border-top: 1px solid #333;
+            text-align: center;
+        }
+
+        /* Buttons */
+        .btn-custom {
+            width: 100%;
+            margin-bottom: 8px;
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            padding: 12px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-custom:hover { background: #333; border-color: var(--primary); color: var(--primary); }
+        .btn-custom.active-lane {
+            background: var(--primary);
+            color: black;
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        /* Full Screen Button */
+        .fullscreen-btn {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0, 0, 0, 0.7); color: var(--primary);
+            border: 1px solid var(--primary); padding: 5px 10px;
+            border-radius: 5px; cursor: pointer; z-index: 10;
+        }
+
+        .disabled-area { opacity: 0.3; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark">
+        <div class="container-fluid justify-content-center">
+            <span class="brand-text"><i class="fas fa-traffic-light"></i> Smart Traffic System</span>
+        </div>
+    </nav>
+
+    <div class="container-fluid dashboard-container">
+        <div class="row h-100 w-100 m-0">
+            
+            <div class="col-lg-8 left-col ps-0 pe-2">
+                <div id="video-container" class="video-wrapper">
+                    <button class="fullscreen-btn" onclick="toggleFullScreen()">
+                        <i class="fas fa-expand"></i> Full Screen
+                    </button>
+                    <img src="{{ url_for('video_feed') }}">
+                </div>
+
+                <div class="row stats-row m-0">
+                    <div class="col-3 px-1"><div class="stat-card"><div class="stat-label">LANE 1 CARS</div><div id="c1" class="stat-val">0</div></div></div>
+                    <div class="col-3 px-1"><div class="stat-card"><div class="stat-label">LANE 2 CARS</div><div id="c2" class="stat-val">0</div></div></div>
+                    <div class="col-3 px-1"><div class="stat-card"><div class="stat-label">LANE 3 CARS</div><div id="c3" class="stat-val">0</div></div></div>
+                    <div class="col-3 px-1"><div class="stat-card"><div class="stat-label">LANE 4 CARS</div><div id="c4" class="stat-val">0</div></div></div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 right-col ps-2 pe-0">
+                <div class="control-panel">
+                    
+                    <div class="timer-section">
+                        <small class="text-secondary">NEXT SIGNAL CHANGE IN</small>
+                        <div id="timer" class="timer-display">--</div>
+                        <div id="status-badge" class="badge bg-warning text-dark w-100 mt-2">AI AUTO MODE ACTIVE</div>
+                    </div>
+                    
+                    <div class="controls-section">
+                        <div class="d-flex justify-content-between mb-3 align-items-center">
+                            <span class="fw-bold">SYSTEM MODE</span>
+                            <div class="btn-group">
+                                <button id="btn-auto" class="btn btn-sm btn-outline-warning active" onclick="setMode('AUTO')">AUTO</button>
+                                <button id="btn-manual" class="btn btn-sm btn-outline-light" onclick="setMode('MANUAL')">MANUAL</button>
+                            </div>
+                        </div>
+
+                        <div id="manual-controls" class="disabled-area">
+                            <div class="row g-2">
+                                <div class="col-6"><button id="btn-l1" class="btn btn-custom" onclick="manualSwitch(1)">LANE 1</button></div>
+                                <div class="col-6"><button id="btn-l2" class="btn btn-custom" onclick="manualSwitch(2)">LANE 2</button></div>
+                                <div class="col-6"><button id="btn-l3" class="btn btn-custom" onclick="manualSwitch(3)">LANE 3</button></div>
+                                <div class="col-6"><button id="btn-l4" class="btn btn-custom" onclick="manualSwitch(4)">LANE 4</button></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="status-section">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">CONNECTION STATUS</span>
+                            <span class="text-success fw-bold"><i class="fas fa-link"></i> CONNECTED</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'AUTO';
+
+        // Full Screen
+        function toggleFullScreen() {
+            let elem = document.getElementById("video-container");
+            let btnText = document.querySelector(".fullscreen-btn");
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen().catch(err => {alert(`Error: ${err.message}`);});
+                btnText.innerHTML = '<i class="fas fa-compress"></i> Normal';
+            } else {
+                document.exitFullscreen();
+                btnText.innerHTML = '<i class="fas fa-expand"></i> Full Screen';
+            }
+        }
+
+        function setMode(mode) {
+            fetch(`/toggle_mode/${mode}`)
+                .then(r => r.json())
+                .then(data => {
+                    currentMode = data.mode;
+                    updateUIState();
+                });
+        }
+
+        function manualSwitch(lane) {
+            fetch(`/manual_switch/${lane}`);
+        }
+
+        function updateUIState() {
+            const manualPanel = document.getElementById('manual-controls');
+            const badge = document.getElementById('status-badge');
+            const btnAuto = document.getElementById('btn-auto');
+            const btnManual = document.getElementById('btn-manual');
+
+            if (currentMode === 'MANUAL') {
+                manualPanel.classList.remove('disabled-area');
+                badge.innerText = "MANUAL CONTROL ENABLED";
+                badge.className = "badge bg-danger w-100 mt-2";
+                btnManual.classList.add('active', 'btn-warning');
+                btnManual.classList.remove('btn-outline-light');
+                btnAuto.classList.remove('active', 'btn-outline-warning');
+                btnAuto.classList.add('btn-outline-light');
+                document.getElementById('timer').innerText = "∞";
+            } else {
+                manualPanel.classList.add('disabled-area');
+                badge.innerText = "AI AUTO MODE ACTIVE";
+                badge.className = "badge bg-warning text-dark w-100 mt-2";
+                btnAuto.classList.add('active', 'btn-outline-warning');
+                btnAuto.classList.remove('btn-outline-light');
+                btnManual.classList.remove('active', 'btn-warning');
+                btnManual.classList.add('btn-outline-light');
+            }
+        }
+
+        function updateData() {
+            fetch('/get_data')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('c1').innerText = data.counts[0];
+                    document.getElementById('c2').innerText = data.counts[1];
+                    document.getElementById('c3').innerText = data.counts[2];
+                    document.getElementById('c4').innerText = data.counts[3];
+
+                    if (data.mode === 'AUTO') {
+                        document.getElementById('timer').innerText = data.time_left;
+                    }
+
+                    for(let i=1; i<=4; i++) {
+                        let btn = document.getElementById('btn-l'+i);
+                        if(i === data.current_lane) btn.classList.add('active-lane');
+                        else btn.classList.remove('active-lane');
+                    }
+                });
+        }
+        setInterval(updateData, 500);
+    </script>
+</body>
+</html>
