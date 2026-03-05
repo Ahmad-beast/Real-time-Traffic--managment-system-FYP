@@ -41,5 +41,6 @@ It uses **Computer Vision (YOLOv8)** to detect vehicle density across 4 lanes (u
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/your-username/smart-traffic-system.git](https://github.com/your-username/smart-traffic-system.git)
+git clone [[https://github.com/your-username/smart-traffic-system.git](https://github.com/your-username/smart-traffic-system.git)](https://github.com/Ahmad-beast/Real-time-Traffic--managment-system-FYP.git)
+
 cd smart-traffic-system
